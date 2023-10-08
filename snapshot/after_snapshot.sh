@@ -22,9 +22,9 @@ git pull origin ${branch}
 mkdir -p $node_result_dir
 
 # memcached
-readonly memcached_result_dir=$node_result_dir/memcached
-mkdir -p $memcached_result_dir
-(echo "stats"; sleep 0.1; echo -e '\x1dclose\x0d';) | telnet localhost $MEMCACHED_PORT > $memcached_result_dir/stats.txt
+# readonly memcached_result_dir=$node_result_dir/memcached
+# mkdir -p $memcached_result_dir
+# (echo "stats"; sleep 0.1; echo -e '\x1dclose\x0d';) | telnet localhost $MEMCACHED_PORT > $memcached_result_dir/stats.txt
 
 # stop profile & analyze
 curl "http://localhost:${GO_PORT}/api/pprof/stop"
@@ -50,7 +50,6 @@ git checkout -b "auto${node_result_dir}"
 git add --all
 git commit -m "committed by after_snapshot.sh"
 git push -u origin "auto${node_result_dir}"
-git checkout "${RELEASE_BRANCH}"
 
 # cleanup
 git checkout "${old_working_branch}"

@@ -52,3 +52,83 @@ https://github.com/matsuu/cloud-init-isucon/blob/main/isucon11q/README.md#bench 
 
 適当な場所から snapshot をパクってきて、config を書き換える。
 そして init.sh を実行
+
+# profiler を仕込む
+
+対応する場所に以下を仕込む。
+
+### "github.com/go-chi/chi/v5" の場合:
+
+```go
+import (
+	...
+	"github.com/pkg/profile"
+)
+
+...
+
+var profiler interface{ Stop() }
+
+...
+
+	// pprof
+	r.Get("/api/pprof/start", getProfileStart)
+	r.Get("/api/pprof/stop", getProfileStop)
+
+...
+
+func getProfileStart(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	profiler = profile.Start(profile.ProfilePath(path))
+	w.WriteHeader(http.StatusOK)
+}
+
+func getProfileStop(w http.ResponseWriter, r *http.Request) {
+	profiler.Stop()
+	w.WriteHeader(http.StatusOK)
+}
+```
+
+### "github.com/labstack/echo/v4" の場合
+
+```go
+import (
+	...
+	"github.com/pkg/profile"
+)
+...
+
+var profiler interface{ Stop() }
+
+...
+
+	// pprof
+	e.GET("/api/pprof/start", getProfileStart)
+	e.GET("/api/pprof/stop", getProfileStop)
+
+...
+
+func getProfileStart(c echo.Context) error {
+	path := c.QueryParam("path")
+	profiler = profile.Start(profile.ProfilePath(path))
+	return c.JSON(http.StatusOK, "pprof start ok")
+}
+
+func getProfileStop(c echo.Context) error {
+	profiler.Stop()
+	return c.JSON(http.StatusOK, "pprof stop ok")
+}
+```
+
+### チェック
+
+```console
+$ cd $REPO_ROOT_DIR/webapp/go
+$ git pull origin main
+$ /home/isucon/local/go/bin/go build -o isucondition
+$ sudo systemctl restart isucondition.go
+$ curl "http://localhost:${GO_PORT}/api/pprof/start?path=/home/isucon/pprof/"
+# ここで適当にアプリにアクセスして、profile を取得
+$ curl "http://localhost:${GO_PORT}/api/pprof/stop"
+$ go tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pdf
+```
