@@ -226,6 +226,7 @@ func init() {
 	memAddr := os.Getenv("MEMCACHED_ADDRESS")
 	conn, err := net.Dial("tcp", memAddr)
 	if err != nil {
+		log.Infof("failed to connect memcached: %v", memAddr)
 		log.Fatalf("failed to connect memcached: %v", err)
 	}
 	memcacheClient = memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
