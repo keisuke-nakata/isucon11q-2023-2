@@ -125,10 +125,14 @@ func getProfileStop(c echo.Context) error {
 ```console
 $ cd $REPO_ROOT_DIR/go
 $ git pull origin main
-$ /home/isucon/local/go/bin/go build -o isucondition
+$ $GO build -o isucondition
 $ sudo systemctl restart isucondition.go
 $ curl "http://localhost:${GO_PORT}/api/pprof/start?path=/home/isucon/pprof/"
 # ここで適当にアプリにアクセスして、profile を取得
 $ curl "http://localhost:${GO_PORT}/api/pprof/stop"
-$ go tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pdf
+$ $GO tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pdf
 ```
+
+# nginx の log を json にする
+
+適当に過去の設定をパクってくる
