@@ -345,8 +345,8 @@ func warmupMemcache() error {
 		if err != nil {
 			return err
 		}
-		err = memcacheClient.Set(&memcache.Item{Key: lastCondition.ID, Value: []byte(data)})
-		if err != nil {
+		err2 := memcacheClient.Set(&memcache.Item{Key: lastCondition.ID, Value: data})
+		if err2 != nil {
 			return err
 		}
 	}
