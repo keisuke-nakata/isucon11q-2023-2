@@ -171,6 +171,11 @@ type Hoge struct {
 	ID        int       `db:"id"`
 }
 
+type CachedCondition struct {
+	Timestamp time.Time `db:"timestamp" json:"timestamp"`
+	Condition string    `db:"condition" json:"condition"`
+}
+
 type PostIsuConditionRequest struct {
 	IsSitting bool   `json:"is_sitting"`
 	Condition string `json:"condition"`
@@ -324,34 +329,34 @@ func getJIAServiceURL(tx *sqlx.Tx) string {
 	return config.URL
 }
 
-func warmupMemcache() error {
-	lastConditions := []*Hoge{}
-	query := "SELECT tmp2.timestamp, tmp2.condition, i.character, i.id " +
-		"FROM " +
-		"(" +
-		"SELECT tmp.jia_isu_uuid, tmp.max_timestamp AS timestamp, c.condition " +
-		"FROM " +
-		"(SELECT jia_isu_uuid, MAX(timestamp) AS max_timestamp FROM isu_condition GROUP BY jia_isu_uuid) AS tmp " +
-		"JOIN isu_condition AS c ON tmp.jia_isu_uuid = c.jia_isu_uuid AND tmp.max_timestamp = c.timestamp " +
-		") AS tmp2 JOIN isu AS i USING (jia_isu_uuid) " +
-		"ORDER BY timestamp DESC"
-	err := db.Select(&lastConditions, query)
-	if err != nil {
-		return err
-	}
+// func warmupMemcache() error {
+// 	lastConditions := []*Hoge{}
+// 	query := "SELECT tmp2.timestamp, tmp2.condition, i.character, i.id " +
+// 		"FROM " +
+// 		"(" +
+// 		"SELECT tmp.jia_isu_uuid, tmp.max_timestamp AS timestamp, c.condition " +
+// 		"FROM " +
+// 		"(SELECT jia_isu_uuid, MAX(timestamp) AS max_timestamp FROM isu_condition GROUP BY jia_isu_uuid) AS tmp " +
+// 		"JOIN isu_condition AS c ON tmp.jia_isu_uuid = c.jia_isu_uuid AND tmp.max_timestamp = c.timestamp " +
+// 		") AS tmp2 JOIN isu AS i USING (jia_isu_uuid) " +
+// 		"ORDER BY timestamp DESC"
+// 	err := db.Select(&lastConditions, query)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	for _, lastCondition := range lastConditions {
-		data, err := json.Marshal(lastCondition)
-		if err != nil {
-			return err
-		}
-		err2 := memcacheClient.Set(&memcache.Item{Key: strconv.Itoa(lastCondition.ID), Value: data})
-		if err2 != nil {
-			return err
-		}
-	}
-	return nil
-}
+// 	for _, lastCondition := range lastConditions {
+// 		data, err := json.Marshal(lastCondition)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		err2 := memcacheClient.Set(&memcache.Item{Key: strconv.Itoa(lastCondition.ID), Value: data})
+// 		if err2 != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 // POST /initialize
 // サービスを初期化
@@ -381,11 +386,11 @@ func postInitialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	err = warmupMemcache()
-	if err != nil {
-		c.Logger().Errorf("memcache error : %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	// err = warmupMemcache()
+	// if err != nil {
+	// 	c.Logger().Errorf("memcache error : %v", err)
+	// 	return c.NoContent(http.StatusInternalServerError)
+	// }
 
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
@@ -1149,41 +1154,95 @@ func getTrend(c echo.Context) error {
 		}
 	}
 
-	lastConditions := []*Hoge{}
-	query := "SELECT tmp2.timestamp, tmp2.condition, i.character, i.id " +
-		"FROM " +
-		"(" +
-		"SELECT tmp.jia_isu_uuid, tmp.max_timestamp AS timestamp, c.condition " +
-		"FROM " +
-		"(SELECT jia_isu_uuid, MAX(timestamp) AS max_timestamp FROM isu_condition GROUP BY jia_isu_uuid) AS tmp " +
-		"JOIN isu_condition AS c ON tmp.jia_isu_uuid = c.jia_isu_uuid AND tmp.max_timestamp = c.timestamp " +
-		") AS tmp2 JOIN isu AS i USING (jia_isu_uuid) " +
-		"ORDER BY timestamp DESC"
-	err = db.Select(&lastConditions, query)
+	isuList := []Isu{}
+	query := "SELECT id, jia_isu_uuid, `character` FROM isu"
+	err = db.Select(&isuList, query)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-
-	for _, isuLastCondition := range lastConditions {
-		conditionLevel, err := calculateConditionLevel(isuLastCondition.Condition)
-		if err != nil {
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
+	for _, isu := range isuList {
+		key := isu.JIAIsuUUID
+		resp := memcacheClient.Get(key)
+		var conditionLevel string
+		var cachedCondition CachedCondition
+		if resp.Status() != memcache.StatusNoError { // cache miss
+			query = "SELECT condition, timestamp FROM isu_condition WHERE jia_isu_uuid = ? ORDER BY timestamp DESC LIMIT 1"
+			isuCondition := IsuCondition{}
+			db.Select(&isuCondition, query, isu.JIAIsuUUID)
+			conditionLevel, err = calculateConditionLevel(isuCondition.Condition)
+			if err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+			cachedCondition = CachedCondition{
+				Condition: conditionLevel,
+				Timestamp: isuCondition.Timestamp,
+			}
+			data, err := json.Marshal(cachedCondition)
+			if err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+			memcacheClient.Set(&memcache.Item{Key: key, Value: data, Expiration: 1})
+		} else { // cache hit
+			err = json.Unmarshal(resp.Value(), &cachedCondition)
+			if err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+			conditionLevel = cachedCondition.Condition
 		}
+
 		trendCondition := TrendCondition{
-			ID:        isuLastCondition.ID,
-			Timestamp: isuLastCondition.Timestamp.Unix(),
+			ID:        isu.ID,
+			Timestamp: cachedCondition.Timestamp.Unix(),
 		}
 		switch conditionLevel {
 		case "info":
-			character2trendResponse[isuLastCondition.Character].Info = append(character2trendResponse[isuLastCondition.Character].Info, &trendCondition)
+			character2trendResponse[isu.Character].Info = append(character2trendResponse[isu.Character].Info, &trendCondition)
 		case "warning":
-			character2trendResponse[isuLastCondition.Character].Warning = append(character2trendResponse[isuLastCondition.Character].Warning, &trendCondition)
+			character2trendResponse[isu.Character].Warning = append(character2trendResponse[isu.Character].Warning, &trendCondition)
 		case "critical":
-			character2trendResponse[isuLastCondition.Character].Critical = append(character2trendResponse[isuLastCondition.Character].Critical, &trendCondition)
+			character2trendResponse[isu.Character].Critical = append(character2trendResponse[isu.Character].Critical, &trendCondition)
 		}
 	}
+
+	// lastConditions := []*Hoge{}
+	// query := "SELECT tmp2.timestamp, tmp2.condition, i.character, i.id " +
+	// 	"FROM " +
+	// 	"(" +
+	// 	"SELECT tmp.jia_isu_uuid, tmp.max_timestamp AS timestamp, c.condition " +
+	// 	"FROM " +
+	// 	"(SELECT jia_isu_uuid, MAX(timestamp) AS max_timestamp FROM isu_condition GROUP BY jia_isu_uuid) AS tmp " +
+	// 	"JOIN isu_condition AS c ON tmp.jia_isu_uuid = c.jia_isu_uuid AND tmp.max_timestamp = c.timestamp " +
+	// 	") AS tmp2 JOIN isu AS i USING (jia_isu_uuid) " +
+	// 	"ORDER BY timestamp DESC"
+	// err = db.Select(&lastConditions, query)
+	// if err != nil {
+	// 	c.Logger().Errorf("db error: %v", err)
+	// 	return c.NoContent(http.StatusInternalServerError)
+	// }
+
+	// for _, isuLastCondition := range lastConditions {
+	// 	conditionLevel, err := calculateConditionLevel(isuLastCondition.Condition)
+	// 	if err != nil {
+	// 		c.Logger().Error(err)
+	// 		return c.NoContent(http.StatusInternalServerError)
+	// 	}
+	// 	trendCondition := TrendCondition{
+	// 		ID:        isuLastCondition.ID,
+	// 		Timestamp: isuLastCondition.Timestamp.Unix(),
+	// 	}
+	// 	switch conditionLevel {
+	// 	case "info":
+	// 		character2trendResponse[isuLastCondition.Character].Info = append(character2trendResponse[isuLastCondition.Character].Info, &trendCondition)
+	// 	case "warning":
+	// 		character2trendResponse[isuLastCondition.Character].Warning = append(character2trendResponse[isuLastCondition.Character].Warning, &trendCondition)
+	// 	case "critical":
+	// 		character2trendResponse[isuLastCondition.Character].Critical = append(character2trendResponse[isuLastCondition.Character].Critical, &trendCondition)
+	// 	}
+	// }
 	res := []TrendResponse{}
 	for _, trendResponse := range character2trendResponse {
 		res = append(res, *trendResponse)
