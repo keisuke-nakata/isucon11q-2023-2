@@ -11,7 +11,7 @@ set -eux
 # git commit -m "summary.md"
 # git push origin ${RESULT_BRANCH}
 
-readonly cmd="git checkout -b result --track origin/result"
+readonly cmd="cd ${REPO_ROOT_DIR} && git checkout -b result --track origin/result"
 $SSH $APPSERVER2_PRIVATE_IP $cmd
 $SSH $APPSERVER3_PRIVATE_IP $cmd
 
