@@ -1,3 +1,4 @@
+readonly SSH="ssh -o StrictHostKeyChecking=no"
 readonly RELEASE_BRANCH=main
 readonly RESULT_BRANCH=result
 
@@ -23,6 +24,6 @@ readonly NGINX_SITE_CONF_DEST=/etc/nginx/sites-available/isucondition.conf
 # readonly MEMCACHED_CONF_DEST=/etc/memcached.conf
 
 readonly PPORF_DIR=/home/isucon/pprof
-readonly GO_PORT=8080
+readonly GO_PORT=3000
 # readonly MEMCACHED_PORT=11211
 readonly ALP_PATTERN="/image/[0-9]+,/posts/[0-9]+,/@\w+"
