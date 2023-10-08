@@ -7,7 +7,7 @@ git branch ${RESULT_BRANCH}
 git checkout ${RESULT_BRANCH}
 mkdir -p ${RESULT_BASE_DIR}
 echo "|dt|score|commit id|change log|\n|--|--|--|--|" > ${RESULT_BASE_DIR}/summary.md
-git add .
+git add ${REPO_ROOT_DIR}
 git commit -m "summary.md"
 git push origin ${RESULT_BRANCH}
 
@@ -28,7 +28,7 @@ cp ${NGINX_ROOT_CONF_DEST} ${NGINX_ROOT_CONF_SRC}
 cp ${NGINX_SITE_CONF_DEST} ${NGINX_SITE_CONF_SRC}
 # cp ${MEMCACHED_CONF_DEST} ${MEMCACHED_CONF_SRC}
 
-git add .
+git add ${REPO_ROOT_DIR}
 git commit -m "conf"
 git push origin ${RELEASE_BRANCH}
 
