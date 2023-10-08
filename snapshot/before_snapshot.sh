@@ -31,7 +31,7 @@ sudo truncate --size 0 $MYSQL_SLOW_LOG
 ###
 
 # deploy env.sh
-# cp ${REPO_ROOT_DIR}/conf/env.sh /home/isucon/
+cp ${REPO_ROOT_DIR}/conf/env.sh /home/isucon/
 
 # deploy mysql
 sudo cp $MYSQL_CONF_SRC $MYSQL_CONF_DEST

@@ -140,3 +140,15 @@ $ $GO tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pd
 # mysql の slow log query を on にする
 
 適当に過去の設定をパクってくる
+
+# mysql を appserver3 に任せる
+
+`/etc/mysql/mariadb.conf.d/50-server.cnf` で bind-address = 0.0.0.0 とする (初期は127.0.0.1)
+
+appserver3 で `mysql -u isucon -D isucondition -p` でログインし、以下を実行：
+```sql
+SELECT * FROM mysql.user;
+GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.11' IDENTIFIED BY 'isucon';
+```
+
+env.sh で MYSQL_HOST を 192.168.0.13 へ
