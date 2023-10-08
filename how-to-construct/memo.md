@@ -149,8 +149,9 @@ appserver3 で `mysql -u isucon -D isucondition -p` でログインし、以下�
 ```sql
 SELECT * FROM mysql.user;
 GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.11' IDENTIFIED BY 'isucon';
+GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.12' IDENTIFIED BY 'isucon';
 ```
 
-appserver1 で `mysql -u isucon -D isucondition -h 192.168.0.14 -p` でログインできればOK.
+appserver1,2 で `mysql -u isucon -D isucondition -h 192.168.0.13 -p` でログインできればOK.
 
 env.sh で MYSQL_HOST を 192.168.0.13 へ
