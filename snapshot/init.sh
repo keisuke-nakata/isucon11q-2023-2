@@ -35,8 +35,10 @@ mkdir -p ${PPORF_DIR}  # これは git 管理しないので .gitkeep 不要
 sudo systemctl restart isucondition.go
 
 cp ${MYSQL_CONF_DEST} ${MYSQL_CONF_SRC}
-sudo touch ${MYSQL_SLOW_LOG}  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
-sudo chmod go+w ${MYSQL_SLOW_LOG}  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
+cmd="sudo touch ${MYSQL_SLOW_LOG} && sudo chmod go+w ${MYSQL_SLOW_LOG}"  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
+bash -c "$cmd"
+$SSH $APPSERVER2_PRIVATE_IP $cmd
+$SSH $APPSERVER3_PRIVATE_IP $cmd
 cp ${NGINX_ROOT_CONF_DEST} ${NGINX_ROOT_CONF_SRC}
 cp ${NGINX_SITE_CONF_DEST} ${NGINX_SITE_CONF_SRC}
 # cp ${MEMCACHED_CONF_DEST} ${MEMCACHED_CONF_SRC}
