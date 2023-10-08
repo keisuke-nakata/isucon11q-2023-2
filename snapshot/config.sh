@@ -1,4 +1,6 @@
 readonly SSH="ssh -o StrictHostKeyChecking=no"
+readonly GO="/home/isucon/local/go/bin/go"
+
 readonly RELEASE_BRANCH=main
 readonly RESULT_BRANCH=result
 
