@@ -1165,19 +1165,19 @@ func getTrend(c echo.Context) error {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	JIAIsuUUIDs := make([]string, len(isuList))
-	for _, isu := range isuList {
-		JIAIsuUUIDs = append(JIAIsuUUIDs, isu.JIAIsuUUID)
-	}
-	resps := memcacheClient.GetMulti(JIAIsuUUIDs)
-	i := 0
+	// JIAIsuUUIDs := make([]string, len(isuList))
 	// for _, isu := range isuList {
-	for key, resp := range resps {
-		isu := isuList[i]
-		i++
-		// key := isu.JIAIsuUUID
+	// 	JIAIsuUUIDs = append(JIAIsuUUIDs, isu.JIAIsuUUID)
+	// }
+	// resps := memcacheClient.GetMulti(JIAIsuUUIDs)
+	// i := 0
+	for _, isu := range isuList {
+		// for key, resp := range resps {
+		// isu := isuList[i]
+		// i++
+		key := isu.JIAIsuUUID
 		// key := resp.Key
-		// resp := memcacheClient.Get(key)
+		resp := memcacheClient.Get(key)
 		var conditionLevel string
 		var cachedCondition CachedCondition
 		if resp.Status() != memcache.StatusNoError { // cache miss
