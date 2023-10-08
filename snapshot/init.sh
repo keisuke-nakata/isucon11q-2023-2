@@ -6,7 +6,7 @@ set -eux
 git branch ${RESULT_BRANCH}
 git checkout ${RESULT_BRANCH}
 mkdir -p ${RESULT_BASE_DIR}
-echo "|dt|score|commit id|change log|\n|--|--|--|--|" > ${RESULT_BASE_DIR}/summary.md
+echo -e "|dt|score|commit id|change log|\n|--|--|--|--|" > ${RESULT_BASE_DIR}/summary.md
 git add ${REPO_ROOT_DIR}
 git commit -m "summary.md"
 git push origin ${RESULT_BRANCH}
