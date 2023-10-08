@@ -31,18 +31,18 @@ cmd="bash ${SNAPSHOT_SCRIPT_DIR}/before_snapshot.sh ${branch}"
 set +x
 bash -c "$cmd"
 set -x
-# # appserver 2
-# set +x
-# echo "========================== BEGIN appserver2 =========================="
-# $SSH $APPSERVER2_PRIVATE_IP $cmd
-# echo "========================== END appserver2 =========================="
-# set -x
-# # appserver 3
-# set +x
-# echo "========================== BEGIN appserver3 =========================="
-# $SSH $APPSERVER3_PRIVATE_IP $cmd
-# echo "========================== END appserver3 =========================="
-# set -x
+# appserver 2
+set +x
+echo "========================== BEGIN appserver2 =========================="
+$SSH $APPSERVER2_PRIVATE_IP $cmd
+echo "========================== END appserver2 =========================="
+set -x
+# appserver 3
+set +x
+echo "========================== BEGIN appserver3 =========================="
+$SSH $APPSERVER3_PRIVATE_IP $cmd
+echo "========================== END appserver3 =========================="
+set -x
 
 ###
 # run benchmark
@@ -79,28 +79,28 @@ bash -c "$cmd"
 set -x
 git checkout "${RESULT_BRANCH}"
 git merge --no-edit "remotes/origin/auto${node_result_dir}"
-# # appserver 2
-# node_result_dir=${result_dir}/appserver2
-# cmd="bash ${SNAPSHOT_SCRIPT_DIR}/after_snapshot.sh ${node_result_dir} ${branch}"
-# set +x
-# echo "========================== BEGIN appserver2 =========================="
-# $SSH $APPSERVER2_PRIVATE_IP $cmd
-# echo "========================== END appserver2 =========================="
-# set -x
-# git checkout "${RESULT_BRANCH}"
-# git fetch origin
-# git merge --no-edit "remotes/origin/auto${node_result_dir}"
-# # appserver 3
-# node_result_dir=${result_dir}/appserver3
-# cmd="bash ${SNAPSHOT_SCRIPT_DIR}/after_snapshot.sh ${node_result_dir} ${branch}"
-# set +x
-# echo "========================== BEGIN appserver3 =========================="
-# $SSH $APPSERVER3_PRIVATE_IP $cmd
-# echo "========================== END appserver3 =========================="
-# set -x
-# git checkout "${RESULT_BRANCH}"
-# git fetch origin
-# git merge --no-edit "remotes/origin/auto${node_result_dir}"
+# appserver 2
+node_result_dir=${result_dir}/appserver2
+cmd="bash ${SNAPSHOT_SCRIPT_DIR}/after_snapshot.sh ${node_result_dir} ${branch}"
+set +x
+echo "========================== BEGIN appserver2 =========================="
+$SSH $APPSERVER2_PRIVATE_IP $cmd
+echo "========================== END appserver2 =========================="
+set -x
+git checkout "${RESULT_BRANCH}"
+git fetch origin
+git merge --no-edit "remotes/origin/auto${node_result_dir}"
+# appserver 3
+node_result_dir=${result_dir}/appserver3
+cmd="bash ${SNAPSHOT_SCRIPT_DIR}/after_snapshot.sh ${node_result_dir} ${branch}"
+set +x
+echo "========================== BEGIN appserver3 =========================="
+$SSH $APPSERVER3_PRIVATE_IP $cmd
+echo "========================== END appserver3 =========================="
+set -x
+git checkout "${RESULT_BRANCH}"
+git fetch origin
+git merge --no-edit "remotes/origin/auto${node_result_dir}"
 
 # push the result
 git push origin "${RESULT_BRANCH}"

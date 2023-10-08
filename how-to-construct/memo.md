@@ -123,7 +123,7 @@ func getProfileStop(c echo.Context) error {
 ### チェック
 
 ```console
-$ cd $REPO_ROOT_DIR/webapp/go
+$ cd $REPO_ROOT_DIR/go
 $ git pull origin main
 $ /home/isucon/local/go/bin/go build -o isucondition
 $ sudo systemctl restart isucondition.go

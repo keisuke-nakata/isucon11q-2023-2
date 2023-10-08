@@ -48,7 +48,7 @@ sudo systemctl reload nginx
 
 # deploy go
 (
-  cd $REPO_ROOT_DIR/webapp/go
+  cd $REPO_ROOT_DIR/go
   /home/isucon/local/go/bin/go build -o isucondition
 )
 readonly service_name="isucondition.go"
