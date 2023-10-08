@@ -1104,7 +1104,7 @@ func getTrend(c echo.Context) error {
 		// 	return c.NoContent(http.StatusInternalServerError)
 		// }
 		query := "SELECT c.condition AS `condition`, c.timestamp AS `timestamp`, i.id AS `isu.id` " +
-			"FROM isu_condition AS c JOIN isu AS i ON jia_isu_uuid " +
+			"FROM isu_condition AS c JOIN isu AS i USING (jia_isu_uuid) " +
 			"WHERE `character` = ? " +
 			"ORDER BY c.timestamp DESC"
 		conditions := []IsuCondition{}
