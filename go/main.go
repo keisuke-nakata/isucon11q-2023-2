@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dropbox/godropbox/memcache"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -51,7 +53,8 @@ var (
 
 	postIsuConditionTargetBaseURL string // JIAへのactivate時に登録する，ISUがconditionを送る先のURL
 
-	profiler interface{ Stop() }
+	profiler       interface{ Stop() }
+	memcacheClient *memcache.RawBinaryClient
 )
 
 type Config struct {
@@ -162,9 +165,9 @@ type TrendCondition struct {
 }
 
 type Hoge struct {
-	Timestamp time.Time `db:"timestamp"`
-	Condition string    `db:"condition"`
-	Character string    `db:"character"`
+	Timestamp time.Time `db:"timestamp" json:"timestamp"`
+	Condition string    `db:"condition" json:"condition"`
+	Character string    `db:"character" json:"character"`
 	ID        int       `db:"id"`
 }
 
@@ -214,6 +217,10 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to parse ECDSA public key: %v", err)
 	}
+
+	memAddr := os.Getenv("MEMCACHED_ADDRESS")
+	conn, _ := net.Dial("tcp", memAddr)
+	memcacheClient = memcache.NewRawBinaryClient(0, conn).(*memcache.RawBinaryClient)
 }
 
 func main() {
@@ -317,6 +324,35 @@ func getJIAServiceURL(tx *sqlx.Tx) string {
 	return config.URL
 }
 
+func warmupMemcache() error {
+	lastConditions := []*Hoge{}
+	query := "SELECT tmp2.timestamp, tmp2.condition, i.character, i.id " +
+		"FROM " +
+		"(" +
+		"SELECT tmp.jia_isu_uuid, tmp.max_timestamp AS timestamp, c.condition " +
+		"FROM " +
+		"(SELECT jia_isu_uuid, MAX(timestamp) AS max_timestamp FROM isu_condition GROUP BY jia_isu_uuid) AS tmp " +
+		"JOIN isu_condition AS c ON tmp.jia_isu_uuid = c.jia_isu_uuid AND tmp.max_timestamp = c.timestamp " +
+		") AS tmp2 JOIN isu AS i USING (jia_isu_uuid) " +
+		"ORDER BY timestamp DESC"
+	err := db.Select(&lastConditions, query)
+	if err != nil {
+		return err
+	}
+
+	for _, lastCondition := range lastConditions {
+		data, err := json.Marshal(lastCondition)
+		if err != nil {
+			return err
+		}
+		err = memcacheClient.Set(&memcache.Item{Key: lastCondition.ID, Value: data})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // POST /initialize
 // サービスを初期化
 func postInitialize(c echo.Context) error {
@@ -342,6 +378,12 @@ func postInitialize(c echo.Context) error {
 	)
 	if err != nil {
 		c.Logger().Errorf("db error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	err = warmupMemcache()
+	if err != nil {
+		c.Logger().Errorf("memcache error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
