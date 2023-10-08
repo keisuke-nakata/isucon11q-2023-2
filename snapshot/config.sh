@@ -28,4 +28,5 @@ readonly NGINX_SITE_CONF_DEST=/etc/nginx/sites-available/isucondition.conf
 readonly PPORF_DIR=/home/isucon/pprof
 readonly GO_PORT=3000
 # readonly MEMCACHED_PORT=11211
-readonly ALP_PATTERN="/image/[0-9]+,/posts/[0-9]+,/@\w+"
+readonly UUID_REGEX="[0-9a-f\-]{36}"
+readonly ALP_PATTERN="/api/condition/${UUID_REGEX}$,/api/isu/${UUID_REGEX}$,/api/isu/${UUID_REGEX}/graph$,/api/isu/${UUID_REGEX}/icon$"
