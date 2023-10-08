@@ -23,8 +23,6 @@ readonly dt=$(date +%Y%m%d-%H%M%S)
 readonly result_dir=${RESULT_BASE_DIR}/${dt}_${commit_id}
 mkdir -p $result_dir
 
-readonly SSH="ssh -o StrictHostKeyChecking=no"
-
 ###
 # run before_snapshot.sh
 ###
