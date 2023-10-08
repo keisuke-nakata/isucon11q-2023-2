@@ -151,4 +151,6 @@ SELECT * FROM mysql.user;
 GRANT ALL ON isucondition.* to 'isucon'@'192.168.0.11' IDENTIFIED BY 'isucon';
 ```
 
+appserver1 で `mysql -u isucon -D isucondition -h 192.168.0.14 -p` でログインできればOK.
+
 env.sh で MYSQL_HOST を 192.168.0.13 へ
