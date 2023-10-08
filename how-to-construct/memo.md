@@ -136,3 +136,7 @@ $ $GO tool pprof --pdf /home/isucon/pprof/cpu.pprof > /home/isucon/pprof/prof.pd
 # nginx の log を json にする
 
 適当に過去の設定をパクってくる
+
+# mysql の slow log query を on にする
+
+適当に過去の設定をパクってくる
