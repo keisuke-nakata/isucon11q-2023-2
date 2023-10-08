@@ -36,7 +36,7 @@ sudo systemctl restart isucondition.go
 
 cp ${MYSQL_CONF_DEST} ${MYSQL_CONF_SRC}
 sudo touch ${MYSQL_SLOW_LOG}  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
-sudo chmod g+w ${MYSQL_SLOW_LOG}  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
+sudo chmod go+w ${MYSQL_SLOW_LOG}  # なぜか最初は `-rw-r--r--` になってて書き込みできなくなってることがある
 cp ${NGINX_ROOT_CONF_DEST} ${NGINX_ROOT_CONF_SRC}
 cp ${NGINX_SITE_CONF_DEST} ${NGINX_SITE_CONF_SRC}
 # cp ${MEMCACHED_CONF_DEST} ${MEMCACHED_CONF_SRC}
