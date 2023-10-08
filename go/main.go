@@ -1202,6 +1202,7 @@ func getTrend(c echo.Context) error {
 		} else { // cache hit
 			err = json.Unmarshal(resp.Value(), &cachedCondition)
 			if err != nil {
+				c.Logger().Infof("failed to unmarshal: %v", resp.Value())
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
 			}
